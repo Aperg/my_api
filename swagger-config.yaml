@@ -1,0 +1,5 @@
+springdoc.swagger-ui.disable-swagger-default-url: true
+url: "https://github.com/Aperg/my-api/swagger/aperg/my_api/v1/my_api.swagger.json"
+dom_id: "#swagger-ui"
+validatorUrl: "https://online.swagger.io/validator"
+disable-swagger-default-url: true

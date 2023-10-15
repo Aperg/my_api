@@ -1,0 +1,23 @@
+project:
+  name: My first project API
+  debug: true
+  environment: development
+  serviceName: my_service
+
+
+grpc:
+  host: 0.0.0.0
+  port: 8082
+  maxConnectionIdle: 5 # Minutes
+  timeout: 15 # Seconds
+  maxConnectionAge: 5 # Minutes
+
+database:
+  host: 127.0.0.1
+  port: 5400
+  user: user
+  password: password
+  name: base
+  sslmode: disable
+  migrations: migrations
+  driver: pgx
