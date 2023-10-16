@@ -2,15 +2,19 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
+	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
 
+	"cmd/main.go/internal/logger"
 	desc "cmd/main.go/pkg/my-api"
 )
 
@@ -29,17 +33,22 @@ func createGatewayServer(ctx context.Context, grpcAddr, gatewayAddr string) *htt
 	conn, err := grpc.DialContext(
 		ctx,
 		grpcAddr,
+		grpc.WithUnaryInterceptor(
+			grpc_opentracing.UnaryClientInterceptor(
+				grpc_opentracing.WithTracer(opentracing.GlobalTracer()),
+			),
+		),
 		grpc.WithInsecure(),
 	)
 	if err != nil {
-		log.Fatal(ctx, fmt.Sprintf("%s: grpc.DialContext failed", createGatewayServerLogTag),
+		logger.FatalKV(ctx, fmt.Sprintf("%s: grpc.DialContext failed", createGatewayServerLogTag),
 			"err", err,
 		)
 	}
 
 	mux := runtime.NewServeMux()
 	if err := desc.RegisterApiServiceHandler(ctx, mux, conn); err != nil {
-		log.Fatal(ctx, fmt.Sprintf("%s: pb.RegisterBssEquipmentRequestApiServiceHandler failed", createGatewayServerLogTag),
+		logger.FatalKV(ctx, fmt.Sprintf("%s: pb.RegisterBssEquipmentRequestApiServiceHandler failed", createGatewayServerLogTag),
 			"err", err,
 		)
 	}
@@ -49,4 +58,25 @@ func createGatewayServer(ctx context.Context, grpcAddr, gatewayAddr string) *htt
 	}
 
 	return gatewayServer
+}
+
+var grpcGatewayTag = opentracing.Tag{Key: string(ext.Component), Value: "grpc-gateway"}
+
+func tracingWrapper(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		httpTotalRequests.Inc()
+		parentSpanContext, err := opentracing.GlobalTracer().Extract(
+			opentracing.HTTPHeaders,
+			opentracing.HTTPHeadersCarrier(r.Header))
+		if err == nil || errors.Is(err, opentracing.ErrSpanContextNotFound) {
+			serverSpan := opentracing.GlobalTracer().StartSpan(
+				"ServeHTTP",
+				ext.RPCServerOption(parentSpanContext),
+				grpcGatewayTag,
+			)
+			r = r.WithContext(opentracing.ContextWithSpan(r.Context(), serverSpan))
+			defer serverSpan.Finish()
+		}
+		h.ServeHTTP(w, r)
+	})
 }

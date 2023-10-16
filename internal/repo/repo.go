@@ -7,6 +7,7 @@ import (
 
 	"cmd/main.go/internal/database"
 
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 
 	"cmd/main.go/internal/model"
@@ -50,8 +51,8 @@ func NewUserRequestRepo(db *sqlx.DB, batchSize uint) *userRequestRepo {
 }
 
 func (r *userRequestRepo) CreateUserRequest(ctx context.Context, userRequest *model.UserRequest, tx *sqlx.Tx) (uint64, error) {
-	// span, ctx := opentracing.StartSpanFromContext(ctx, "repo.CreateUserRequest")
-	// defer span.Finish()
+	span, ctx := opentracing.StartSpanFromContext(ctx, "repo.CreateUserRequest")
+	defer span.Finish()
 
 	sb := database.StatementBuilder.
 		Insert(userRequestTable).
@@ -100,7 +101,8 @@ func (r *userRequestRepo) CreateUserRequest(ctx context.Context, userRequest *mo
 }
 
 func (r *userRequestRepo) GetUserByIdRequest(ctx context.Context, IDs []uint64) ([]model.UserRequest, error) {
-
+	span, ctx := opentracing.StartSpanFromContext(ctx, "repo.GetUserByIdRequest")
+	defer span.Finish()
 	sb := database.StatementBuilder.
 		Select("*").
 		From(userRequestTable).
@@ -120,7 +122,8 @@ func (r *userRequestRepo) GetUserByIdRequest(ctx context.Context, IDs []uint64) 
 }
 
 func (r *userRequestRepo) ListUserRequest(ctx context.Context, limit uint64, offset uint64) ([]model.UserRequest, error) {
-
+	span, ctx := opentracing.StartSpanFromContext(ctx, "repo.ListUserRequest")
+	defer span.Finish()
 	sb := database.StatementBuilder.
 		Select("*").
 		From(userRequestTable).
@@ -144,7 +147,8 @@ func (r *userRequestRepo) ListUserRequest(ctx context.Context, limit uint64, off
 }
 
 func (r *userRequestRepo) RemoveUserRequest(ctx context.Context, IDs []uint64, tx *sqlx.Tx) (bool, error) {
-
+	span, ctx := opentracing.StartSpanFromContext(ctx, "repo.RemoveUserRequest")
+	defer span.Finish()
 	sb := database.StatementBuilder.
 		Update(userRequestTable).
 		Set(userRequestDeletedAtAtColumn, time.Now()).
@@ -214,7 +218,8 @@ func (r *userRequestRepo) Exists(ctx context.Context, userRequestID uint64) (boo
 
 // // nolint:dupl
 func (r *userRequestRepo) UpdateUserByIdRequest(ctx context.Context, userRequestID uint64, name, email string, tx *sqlx.Tx) (bool, error) {
-
+	span, ctx := opentracing.StartSpanFromContext(ctx, "repo.UpdateUserByIdRequest")
+	defer span.Finish()
 	sb := database.StatementBuilder.
 		Update(userRequestTable).
 		Set(userRequestUpdatedAtColumn, time.Now()).

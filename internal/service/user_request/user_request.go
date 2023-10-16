@@ -8,6 +8,7 @@ import (
 	"cmd/main.go/internal/repo"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -52,6 +53,9 @@ var ErrNoUpdatedUserIDUserRequest = errors.New("unable to update user of user re
 func (s service) CreateUserRequest(ctx context.Context, userRequest *model.UserRequest) (uint64, error) {
 
 	createdRequestID, txErr := database.WithTxReturnUint64(ctx, s.db, func(ctx context.Context, tx *sqlx.Tx) (uint64, error) {
+		span, ctx := opentracing.StartSpanFromContext(ctx, "service.CreateUserRequest")
+		defer span.Finish()
+
 		id, err := s.requestRepository.CreateUserRequest(ctx, userRequest, tx)
 		if err != nil {
 			return 0, errors.Wrap(err, "requestRepository.CreateUserRequest")
@@ -73,7 +77,8 @@ func (s service) CreateUserRequest(ctx context.Context, userRequest *model.UserR
 }
 
 func (s service) GetUserByIdRequest(ctx context.Context, IDs []uint64) ([]model.UserRequest, error) {
-
+	span, ctx := opentracing.StartSpanFromContext(ctx, "service.GetUserByIdRequest")
+	defer span.Finish()
 	userRequests, err := s.requestRepository.GetUserByIdRequest(ctx, IDs)
 	if err != nil {
 		return nil, errors.Wrap(err, "repository.GetUserByIdtRequest")
@@ -102,7 +107,8 @@ func (s service) CheckExistsUserRequest(ctx context.Context, ID uint64) (bool, e
 }
 
 func (s service) ListUserRequest(ctx context.Context, limit uint64, offset uint64) ([]model.UserRequest, error) {
-
+	span, ctx := opentracing.StartSpanFromContext(ctx, "service.ListUserRequest")
+	defer span.Finish()
 	userRequests, err := s.requestRepository.ListUserRequest(ctx, limit, offset)
 	if err != nil {
 		return nil, errors.Wrap(err, "repository.ListUserRequest")
@@ -116,7 +122,8 @@ func (s service) ListUserRequest(ctx context.Context, limit uint64, offset uint6
 }
 
 func (s service) RemoveUserRequest(ctx context.Context, IDs []uint64) (bool, error) {
-
+	span, ctx := opentracing.StartSpanFromContext(ctx, "service.RemoveUserRequest")
+	defer span.Finish()
 	deleted, txErr := database.WithTxReturnBool(ctx, s.db, func(ctx context.Context, tx *sqlx.Tx) (bool, error) {
 		result, err := s.requestRepository.RemoveUserRequest(ctx, IDs, tx)
 		if err != nil {
@@ -138,7 +145,8 @@ func (s service) RemoveUserRequest(ctx context.Context, IDs []uint64) (bool, err
 }
 
 func (s service) UpdateUserByIdRequest(ctx context.Context, userRequestID uint64, name, email string) (bool, error) {
-
+	span, ctx := opentracing.StartSpanFromContext(ctx, "service.UpdateUserByIdRequest")
+	defer span.Finish()
 	updated, txErr := database.WithTxReturnBool(ctx, s.db, func(ctx context.Context, tx *sqlx.Tx) (bool, error) {
 		result, err := s.requestRepository.UpdateUserByIdRequest(ctx, userRequestID, name, email, tx)
 		if err != nil {

@@ -3,7 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
+
+	"cmd/main.go/internal/logger"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -18,7 +19,7 @@ var StatementBuilder = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 func NewPostgres(ctx context.Context, dsn, driver string) (*sqlx.DB, error) {
 	db, err := sqlx.Open(driver, dsn)
 	if err != nil {
-		log.Print(ctx, fmt.Sprintf("%s: sqlx.Open failed to create database connection", newPostgresLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: sqlx.Open failed to create database connection", newPostgresLogTag),
 			"error", err,
 		)
 
@@ -26,7 +27,7 @@ func NewPostgres(ctx context.Context, dsn, driver string) (*sqlx.DB, error) {
 	}
 
 	if err = db.PingContext(ctx); err != nil {
-		log.Print(ctx, fmt.Sprintf("%s: db.PingContext failed ping the database", newPostgresLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: db.PingContext failed ping the database", newPostgresLogTag),
 			"error", err,
 		)
 

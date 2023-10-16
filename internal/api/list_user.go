@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"cmd/main.go/internal/logger"
 	"cmd/main.go/internal/model"
 	desc "cmd/main.go/pkg/my-api"
 
@@ -15,7 +15,7 @@ import (
 func (i *Implementation) ListUser(ctx context.Context, req *desc.ListUserRequest) (*desc.ListUserResponse, error) {
 
 	if err := req.Validate(); err != nil {
-		log.Print(fmt.Sprintf("%s: invalid argument", listUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: invalid argument", listUserLogTag),
 			"err", err,
 		)
 
@@ -24,7 +24,7 @@ func (i *Implementation) ListUser(ctx context.Context, req *desc.ListUserRequest
 	userRequests, err := i.userRequestService.ListUserRequest(ctx, req.Limit, req.Offset)
 
 	if err != nil {
-		log.Print(fmt.Sprintf("%s: userRequestService.ListUserRequest failed", listUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: userRequestService.ListUserRequest failed", listUserLogTag),
 			"err", err,
 			"limit", req.Limit,
 			"offset", req.Offset,
@@ -34,7 +34,7 @@ func (i *Implementation) ListUser(ctx context.Context, req *desc.ListUserRequest
 	}
 
 	if userRequests == nil {
-		log.Print(ctx, fmt.Sprintf("%s: userRequestService.ListUserRequest failed", listUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: userRequestService.ListUserRequest failed", listUserLogTag),
 			"err", "unable to get list of user requests",
 			"limit", req.Limit,
 			"offset", req.Offset,
@@ -46,14 +46,14 @@ func (i *Implementation) ListUser(ctx context.Context, req *desc.ListUserRequest
 	userRequestPb, err := model.ConvertRepeatedUserRequestsToPb(userRequests)
 
 	if err != nil {
-		log.Print(fmt.Sprintf("%s: unable to convert list of UserRequests to Pb message", listUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: unable to convert list of UserRequests to Pb message", listUserLogTag),
 			"err", err,
 		)
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	log.Printf("%s: success", listUserLogTag)
+	logger.Info(ctx, fmt.Sprintf("%s: success", listUserLogTag))
 
 	return &desc.ListUserResponse{
 		Items: userRequestPb,

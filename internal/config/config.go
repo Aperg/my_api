@@ -53,12 +53,26 @@ type Project struct {
 	ServiceName string `yaml:"serviceName"`
 }
 
+// Jaeger - contains all parameters metrics information.
+type Jaeger struct {
+	Service string `yaml:"service"`
+	Host    string `yaml:"host"`
+	Port    string `yaml:"port"`
+}
+
+// Telemetry config for logs.
+type Telemetry struct {
+	GraylogPath string `yaml:"graylogPath"`
+}
+
 // Config - contains all configuration parameters in config package.
 type Config struct {
-	Project  Project  `yaml:"project"`
-	Grpc     Grpc     `yaml:"grpc"`
-	Rest     Rest     `yaml:"rest"`
-	Database Database `yaml:"database"`
+	Project   Project   `yaml:"project"`
+	Grpc      Grpc      `yaml:"grpc"`
+	Rest      Rest      `yaml:"rest"`
+	Database  Database  `yaml:"database"`
+	Jaeger    Jaeger    `yaml:"jaeger"`
+	Telemetry Telemetry `yaml:"telemetry"`
 }
 
 // ReadConfigYML - read configurations from file and init instance Config.

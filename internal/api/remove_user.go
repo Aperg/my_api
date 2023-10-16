@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"cmd/main.go/internal/logger"
 	desc "cmd/main.go/pkg/my-api"
 
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -25,7 +25,7 @@ func (i *Implementation) RemoveUser(ctx context.Context, req *desc.RemoveUserReq
 	}
 
 	if err != nil {
-		log.Info().Msgf(fmt.Sprintf("%s: userRequestService.RemoveUserRequest failed", removeUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: userRequestService.RemoveUserRequest failed", removeUserLogTag),
 			"err", err,
 			"UserRequestId", req.GetIdsUser(),
 		)
@@ -34,7 +34,7 @@ func (i *Implementation) RemoveUser(ctx context.Context, req *desc.RemoveUserReq
 	}
 
 	if !result {
-		log.Info().Msgf(fmt.Sprintf("%s: userRequestService.RemoveUsertRequest failed", removeUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: userRequestService.RemoveUsertRequest failed", removeUserLogTag),
 			"err", "unable to remove user request, no rows affected",
 			"usertRequestId", req.GetIdsUser(),
 		)
@@ -42,7 +42,7 @@ func (i *Implementation) RemoveUser(ctx context.Context, req *desc.RemoveUserReq
 		return nil, status.Error(codes.Internal, "unable to remove user request")
 	}
 
-	log.Info().Msgf(fmt.Sprintf("%s: success", removeUserLogTag))
+	logger.Info(ctx, fmt.Sprintf("%s: success", removeUserLogTag))
 
 	return &desc.RemoveUserResponse{
 		Removed: result}, nil

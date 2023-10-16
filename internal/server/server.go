@@ -12,12 +12,20 @@ import (
 	"syscall"
 	"time"
 
+	"cmd/main.go/internal/pkg/grps_logger"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
 	"cmd/main.go/internal/api"
+	"cmd/main.go/internal/logger"
 	"cmd/main.go/internal/service/user_request"
 	desc "cmd/main.go/pkg/my-api"
 
@@ -48,7 +56,8 @@ func (s *GrpcServer) Start(ctx context.Context, cfg *config.Config) error {
 
 	go func() {
 
-		log.Info().Msgf("Gateway server is running on %s", gatewayAddr)
+		logger.InfoKV(ctx, fmt.Sprintf("%s: gateway server is running on", grpcServerStartLogTag),
+			"address", grpcAddr)
 		if err := gatewayServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Error().Err(err).Msg("Failed running gateway server")
 			cancel()
@@ -73,12 +82,21 @@ func (s *GrpcServer) Start(ctx context.Context, cfg *config.Config) error {
 			MaxConnectionAge:  time.Duration(cfg.Grpc.MaxConnectionAge) * time.Minute,
 			Time:              time.Duration(cfg.Grpc.Timeout) * time.Minute,
 		}),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_ctxtags.UnaryServerInterceptor(),
+			grpc_opentracing.UnaryServerInterceptor(),
+			grpcrecovery.UnaryServerInterceptor(),
+			grpc_zap.PayloadUnaryServerInterceptor(logger.Clone(ctx), grps_logger.ServerPayloadLoggingDecider()),
+			grps_logger.UnaryServerInterceptor(),
+		)),
 	)
 
 	desc.RegisterApiServiceServer(grpcServer, api.NewApiService(s.userRequestService))
 
 	go func() {
-		log.Info().Msgf("GRPC Server is listening on: %s", grpcAddr)
+		logger.InfoKV(ctx, fmt.Sprintf("%s: GRPC server is listening on", grpcServerStartLogTag),
+			"address", grpcAddr,
+		)
 		if err := grpcServer.Serve(l); err != nil {
 			log.Fatal().Err(err).Msg("Failed running gRPC server")
 		}
@@ -99,21 +117,21 @@ func (s *GrpcServer) Start(ctx context.Context, cfg *config.Config) error {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	select {
 	case v := <-quit:
-		log.Info().Msgf("signal.Notify: %v", v)
+		logger.InfoKV(ctx, fmt.Sprintf("%s: signal.Notify", grpcServerStartLogTag), "quit", v)
 	case done := <-ctx.Done():
-		log.Info().Msgf("ctx.Done: %v", done)
+		logger.InfoKV(ctx, fmt.Sprintf("%s: ctx.Done", grpcServerStartLogTag), "done", done)
 	}
 
 	isReady.Store(false)
 
 	if err := gatewayServer.Shutdown(ctx); err != nil {
-		log.Error().Err(err).Msg("gatewayServer.Shutdown")
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: gatewayServer.Shutdown failed", grpcServerStartLogTag), "err", err)
 	} else {
-		log.Info().Msg("gatewayServer shut down correctly")
+		logger.Info(ctx, fmt.Sprintf("%s: gatewayServer shut down correctly", grpcServerStartLogTag))
 	}
 
 	grpcServer.GracefulStop()
-	log.Info().Msgf("grpcServer shut down correctly")
+	logger.Info(ctx, fmt.Sprintf("%s: grpcServer shut down correctly", grpcServerStartLogTag))
 
 	return nil
 }

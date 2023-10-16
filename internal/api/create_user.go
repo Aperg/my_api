@@ -3,13 +3,13 @@ package api
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"cmd/main.go/internal/logger"
 	"cmd/main.go/internal/model"
 	desc "cmd/main.go/pkg/my-api"
 )
@@ -19,7 +19,7 @@ func (i *Implementation) CreateUser(ctx context.Context, req *desc.CreateUserReq
 	req.CreatedAt = timestamppb.New(time.Now())
 
 	if err := req.Validate(); err != nil {
-		log.Print(fmt.Sprintf("%s: invalid argument", createUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: invalid argument", createUserLogTag),
 			"err", err,
 		)
 
@@ -46,7 +46,7 @@ func (i *Implementation) CreateUser(ctx context.Context, req *desc.CreateUserReq
 	User, err := model.ConvertPbToUserRequest(&newItem)
 
 	if err != nil {
-		log.Print(fmt.Sprintf("%s: unable to convert Pb message to EquipmentRequest", createUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: unable to convert Pb message to EquipmentRequest", createUserLogTag),
 			"err", err,
 		)
 
@@ -56,7 +56,7 @@ func (i *Implementation) CreateUser(ctx context.Context, req *desc.CreateUserReq
 	id, err := i.userRequestService.CreateUserRequest(ctx, User)
 
 	if err != nil {
-		log.Print(fmt.Sprintf("%s: userRequestService.CreateUserRequest failed", createUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: userRequestService.CreateUserRequest failed", createUserLogTag),
 			"err", err,
 			"iduser", req.IdUser,
 			"name", req.Name,
@@ -71,7 +71,7 @@ func (i *Implementation) CreateUser(ctx context.Context, req *desc.CreateUserReq
 	}
 
 	if id == 0 {
-		log.Print(fmt.Sprintf("%s: : userRequestService.CreateUserRequest failed", createUserLogTag),
+		logger.ErrorKV(ctx, fmt.Sprintf("%s: : userRequestService.CreateUserRequest failed", createUserLogTag),
 			"err", "unable to get created user",
 			"iduser", req.IdUser,
 			"name", req.Name,
@@ -85,7 +85,7 @@ func (i *Implementation) CreateUser(ctx context.Context, req *desc.CreateUserReq
 		return nil, status.Error(codes.Internal, "unable to get created user")
 	}
 
-	log.Print(fmt.Sprintf("%s: success ", createUserLogTag),
+	logger.InfoKV(ctx, fmt.Sprintf("%s: success ", createUserLogTag),
 		"iduser ", id,
 	)
 

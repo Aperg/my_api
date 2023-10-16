@@ -7,6 +7,7 @@ import (
 
 const (
 	createUserLogTag     = "CreateUser"
+	GetUserByIdLogTag    = "GetUserById"
 	listUserLogTag       = "ListUser"
 	removeUserLogTag     = "RemoveUser"
 	updateUserByIdLogTag = "UpdateUserById"
