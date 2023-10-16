@@ -39,12 +39,12 @@ func main() {
 	defer cancel()
 
 	dsn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=%v",
-		cfg.Database1.Host,
-		cfg.Database1.Port,
-		cfg.Database1.User,
-		cfg.Database1.Password,
-		cfg.Database1.Name,
-		cfg.Database1.SslMode,
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.Name,
+		cfg.Database.SslMode,
 	)
 
 	db, err := database.NewPostgres(initCtx, dsn, cfg.Database.Driver)

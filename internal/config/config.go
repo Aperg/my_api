@@ -29,6 +29,16 @@ type Database struct {
 	SslMode    string `yaml:"sslmode"`
 	Driver     string `yaml:"driver"`
 }
+type Database1 struct {
+	Host       string `yaml:"host"`
+	Port       string `yaml:"port"`
+	User       string `yaml:"user"`
+	Password   string `yaml:"password"`
+	Migrations string `yaml:"migrations"`
+	Name       string `yaml:"name"`
+	SslMode    string `yaml:"sslmode"`
+	Driver     string `yaml:"driver"`
+}
 
 // Grpc - contains parameter address grpc.
 type Grpc struct {
@@ -71,6 +81,7 @@ type Config struct {
 	Grpc      Grpc      `yaml:"grpc"`
 	Rest      Rest      `yaml:"rest"`
 	Database  Database  `yaml:"database"`
+	Database1 Database1 `yaml:"database1"`
 	Jaeger    Jaeger    `yaml:"jaeger"`
 	Telemetry Telemetry `yaml:"telemetry"`
 }

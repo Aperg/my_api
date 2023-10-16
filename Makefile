@@ -30,3 +30,15 @@ deps-go:
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 	go install github.com/envoyproxy/protoc-gen-validate@latest
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger@latest
+
+
+.PHONY: build
+build: .build
+
+.PHONY: build-go
+build-go:  .build
+
+.build:
+	go mod download && CGO_ENABLED=0  go build \
+		-tags='no_mysql no_sqlite3' \
+		-o ./bin/grpc-server$(shell go env GOEXE) ./cmd/grpc-server/main.go

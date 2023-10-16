@@ -7,22 +7,22 @@ RUN apk add --update make git protoc protobuf protobuf-dev curl
 COPY . /home/${GITHUB_PATH}
 WORKDIR /home/${GITHUB_PATH}
 # RUN make deps-go
-# RUN make build-go
+RUN make build-go
 
 # gRPC Server
 
-# FROM alpine:latest as server
-# LABEL org.opencontainers.image.source https://${GITHUB_PATH}
-# RUN apk --no-cache add ca-certificates
-# WORKDIR /root/
+FROM alpine:latest as server
+LABEL org.opencontainers.image.source https://${GITHUB_PATH}
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
 
-# COPY --from=builder /home/${GITHUB_PATH}/bin/grpc-server .
-# COPY --from=builder /home/${GITHUB_PATH}/config.yml .
+COPY --from=builder /home/${GITHUB_PATH}/bin/grpc-server .
+COPY --from=builder /home/${GITHUB_PATH}/config.yml .
 
-# RUN chown root:root grpc-server
+RUN chown root:root grpc-server
 
-# EXPOSE 50051
-# EXPOSE 8080
-# EXPOSE 9100
+EXPOSE 50051
+EXPOSE 8080
+EXPOSE 9100
 
-# CMD ["./grpc-server"]
+CMD ["./grpc-server"]

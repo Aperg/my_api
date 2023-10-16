@@ -5,6 +5,11 @@ services:
       context: .
       dockerfile: ./Dockerfile
     restart: unless-stopped
+    logging:
+      driver: 'gelf'
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: my-api
     networks:
       - ompnw
     depends_on:
@@ -49,13 +54,18 @@ services:
       interval: 10s
       retries: 10
     restart: always
+    logging:
+      driver: 'gelf'
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: postgres    
     environment:
       POSTGRES_DB: "base"
       POSTGRES_USER: "user"
       POSTGRES_PASSWORD: "password"
       PGDATA: "/var/lib/postgresql/data/pgdata"
-      APP_DB_USER: docker
-      APP_DB_PASS: docker
+      APP_DB_USER: user
+      APP_DB_PASS: password
     ports:
       - 5400:5432
     deploy:
@@ -70,22 +80,46 @@ services:
       - ./scripts/init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
  
 
-  swagger-ui:
-    image: swaggerapi/swagger-ui
+  # swagger-ui:
+  #   image: swaggerapi/swagger-ui
+  #   ports:
+  #     - 8081:8080
+  #   restart: always
+  #   volumes:
+  #     - ./swagger:/swagger
+  #   environment:
+  #     SWAGGER_JSON: ./swagger/aperg/my_api/v1/my_api.swagger.json
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - ompnw
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    restart: unless-stopped
+    logging:
+      driver: 'gelf'
+      options:
+        gelf-address: 'udp://localhost:12201'
+        tag: jaeger
     ports:
-      - 8081:8080
-    restart: always
-    volumes:
-      - ./swagger:/swagger
-    environment:
-      SWAGGER_JSON: ./swagger/aperg/my_api/v1/my_api.swagger.json
-    depends_on:
-      - api
+      - 6831:6831/udp
+      - 16686:16686
     networks:
       - ompnw
 
+  mongo:
+    image: mongo:4.2
+    restart: always
+    networks:
+      - ompnw
+    volumes:
+      - mongodata:/data/db
+
 volumes:
   pgdata:
+    driver: local
+  mongodata:
     driver: local
 
 networks:

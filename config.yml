@@ -12,7 +12,19 @@ grpc:
   timeout: 15 # Seconds
   maxConnectionAge: 5 # Minutes
 
+# docker settings
 database:
+  host: postgres
+  port: 5432
+  user: user
+  password: password
+  name: base
+  sslmode: disable
+  migrations: migrations
+  driver: pgx
+
+# make run settings
+database1:
   host: 127.0.0.1
   port: 5400
   user: user
